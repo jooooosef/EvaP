@@ -901,21 +901,24 @@ def semester_questionnaire_assign(request, semester_id):
         raise PermissionDenied
     evaluations = semester.evaluations.filter(state=Evaluation.State.NEW)
     course_types = CourseType.objects.filter(courses__evaluations__in=evaluations)
-    form = QuestionnairesAssignForm(request.POST or None, course_types=course_types)
+    form = QuestionnairesAssignForm(request.POST or None, course_types=course_types) # das erste is inital data, damit bei fehler die alten sachen da sind
+
+    general_fields = [field for field in form if field.name.startswith("general-")]
+    contributor_fields = [field for field in form if field.name.startswith("contributor-")]
 
     if form.is_valid():
         for evaluation in evaluations:
-            if form.cleaned_data[evaluation.course.type.name]:
-                evaluation.general_contribution.questionnaires.set(form.cleaned_data[evaluation.course.type.name])
-            if form.cleaned_data["all-contributors"]:
+            if form.cleaned_data["general-" + evaluation.course.type.name]:
+                evaluation.general_contribution.questionnaires.set(form.cleaned_data["general-" + evaluation.course.type.name])
+            if form.cleaned_data["contributor-" + evaluation.course.type.name]:
                 for contribution in evaluation.contributions.exclude(contributor=None):
-                    contribution.questionnaires.set(form.cleaned_data["all-contributors"])
+                    contribution.questionnaires.set(form.cleaned_data["contributor-" + evaluation.course.type.name])
             evaluation.save()
 
         messages.success(request, _("Successfully assigned questionnaires."))
         return redirect("staff:semester_view", semester_id)
 
-    return render(request, "staff_semester_questionnaire_assign_form.html", {"semester": semester, "form": form})
+    return render(request, "staff_semester_questionnaire_assign_form.html", {"semester": semester, "form": form, "general_fields": general_fields, "contributor_fields": contributor_fields})
 
 
 @manager_required
