@@ -908,15 +908,16 @@ class TestSemesterAssignView(WebTestStaffMode):
     @classmethod
     def setUpTestData(cls):
         cls.manager = make_manager()
-        cls.semester = baker.make(Semester)
+        cls.semester: Semester = baker.make(Semester)
         cls.url = f"/staff/semester/{cls.semester.pk}/assign"
 
-        lecture_type = baker.make(CourseType, name_de="Vorlesung", name_en="Lecture")
-        seminar_type = baker.make(CourseType, name_de="Seminar", name_en="Seminar")
-        cls.questionnaire = baker.make(Questionnaire, type=Questionnaire.Type.TOP)
+        cls.lecture_type = baker.make(CourseType, name_de="Vorlesung", name_en="Lecture")
+        cls.seminar_type = baker.make(CourseType, name_de="Seminar", name_en="Seminar")
+        cls.questionnaire_general = baker.make(Questionnaire, type=Questionnaire.Type.TOP)
+        cls.questionnaire_contributor = baker.make(Questionnaire, type=Questionnaire.Type.CONTRIBUTOR)
 
-        evaluation1 = baker.make(Evaluation, course__type=seminar_type, course__semester=cls.semester)
-        evaluation2 = baker.make(Evaluation, course__type=lecture_type, course__semester=cls.semester)
+        evaluation1 = baker.make(Evaluation, course__type=cls.seminar_type, course__semester=cls.semester)
+        evaluation2 = baker.make(Evaluation, course__type=cls.lecture_type, course__semester=cls.semester)
         baker.make(
             Contribution,
             contributor=baker.make(UserProfile),
@@ -928,16 +929,24 @@ class TestSemesterAssignView(WebTestStaffMode):
             _bulk_create=True,
         )
 
-    def test_assign_questionnaires(self):
+    def test_assign_questionnaires(self) -> None:
         page = self.app.get(self.url, user=self.manager)
         assign_form = page.forms["questionnaire-assign-form"]
-        assign_form["Seminar"] = [self.questionnaire.pk]
-        assign_form["Lecture"] = [self.questionnaire.pk]
+        assign_form["general-Seminar"] = [self.questionnaire_general.pk]
+        assign_form["contributor-Lecture"] = [self.questionnaire_contributor.pk]
         page = assign_form.submit().follow()
 
         for evaluation in self.semester.evaluations.all():
-            self.assertEqual(evaluation.general_contribution.questionnaires.count(), 1)
-            self.assertEqual(evaluation.general_contribution.questionnaires.get(), self.questionnaire)
+            if evaluation.course.type == self.seminar_type:
+                self.assertEqual(evaluation.general_contribution.questionnaires.count(), 1)
+                self.assertEqual(evaluation.general_contribution.questionnaires.get(), self.questionnaire_general)
+                for contribution in evaluation.contributions.exclude(contributor=None): # contributions without general
+                    self.assertEqual(contribution.questionnaires.count(), 0)
+            if evaluation.course.type == self.lecture_type:
+                self.assertEqual(evaluation.general_contribution.questionnaires.count(), 0)
+                for contribution in evaluation.contributions.exclude(contributor=None):
+                    self.assertEqual(contribution.questionnaires.count(), 1)
+                    self.assertEqual(contribution.questionnaires.get(), self.questionnaire_contributor)
 
 
 class TestSemesterPreparationReminderView(WebTestStaffModeWith200Check):
