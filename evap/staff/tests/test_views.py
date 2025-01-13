@@ -3849,9 +3849,9 @@ class TestSemesterQuestionnaireAssignment(WebTestStaffMode):
     def test_questionnaire_assignment(self):
         page = self.app.get(self.url, user=self.manager, status=200)
         form = page.forms["questionnaire-assign-form"]
-        form[self.course_type_1.name] = [self.questionnaire_1.pk, self.questionnaire_2.pk]
-        form[self.course_type_2.name] = [self.questionnaire_2.pk]
-        form["all-contributors"] = [self.questionnaire_responsible.pk]
+        form["general-" + self.course_type_1.name] = [self.questionnaire_1.pk, self.questionnaire_2.pk]
+        form["general-" + self.course_type_2.name] = [self.questionnaire_2.pk]
+        form["contributor-" + self.course_type_1.name] = [self.questionnaire_responsible.pk]
 
         response = form.submit().follow()
         self.assertIn("Successfully", str(response))
@@ -3867,7 +3867,7 @@ class TestSemesterQuestionnaireAssignment(WebTestStaffMode):
         )
         self.assertEqual(
             set(self.evaluation_2.contributions.get(contributor=self.responsible).questionnaires.all()),
-            {self.questionnaire_responsible},
+            set(),
         )
 
 
