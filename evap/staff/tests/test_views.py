@@ -940,7 +940,7 @@ class TestSemesterAssignView(WebTestStaffMode):
             if evaluation.course.type == self.seminar_type:
                 self.assertEqual(evaluation.general_contribution.questionnaires.count(), 1)
                 self.assertEqual(evaluation.general_contribution.questionnaires.get(), self.questionnaire_general)
-                for contribution in evaluation.contributions.exclude(contributor=None): # contributions without general
+                for contribution in evaluation.contributions.exclude(contributor=None):  # contributions without general
                     self.assertEqual(contribution.questionnaires.count(), 0)
             if evaluation.course.type == self.lecture_type:
                 self.assertEqual(evaluation.general_contribution.questionnaires.count(), 0)

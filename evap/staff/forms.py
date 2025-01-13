@@ -931,13 +931,11 @@ class QuestionnairesAssignForm(forms.Form):
                 queryset=general_questionnaires,
             )
             self.fields["contributor-" + course_type.name] = forms.ModelMultipleChoiceField(
-                label=_(course_type.name),
-                required=False, 
-                queryset=contributor_questionnaires
-        )
-        #self.fields["all-contributors"] = forms.ModelMultipleChoiceField(
+                label=_(course_type.name), required=False, queryset=contributor_questionnaires
+            )
+        # self.fields["all-contributors"] = forms.ModelMultipleChoiceField(
         #    label=_("All contributors"), required=False, queryset=contributor_questionnaires
-        #)
+        # )
 
 
 class UserForm(forms.ModelForm):
