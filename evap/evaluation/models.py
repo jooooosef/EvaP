@@ -849,7 +849,7 @@ class Evaluation(LoggedModel):
         return Evaluation.State(self.state).label
 
     @cached_property
-    def general_contribution(self) -> "Contribution | None":
+    def general_contribution(self):
         if self.pk is None:
             return None
 
