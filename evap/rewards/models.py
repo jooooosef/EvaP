@@ -5,10 +5,14 @@ from django.dispatch import Signal
 from django.utils.translation import gettext_lazy as _
 
 from evap.evaluation.models import Semester, UserProfile
+from evap.evaluation.tools import translate
 
 
 class RewardPointRedemptionEvent(models.Model):
-    name = models.CharField(max_length=1024, verbose_name=_("event name"))
+    name_de = models.CharField(max_length=1024, unique=True, verbose_name=_("name (german)"))
+    name_en = models.CharField(max_length=1024, unique=True, verbose_name=_("name (english)"))
+    name = translate(en="name_en", de="name_de")
+    #name = models.CharField(max_length=1024, verbose_name=_("event name"))
     date = models.DateField(verbose_name=_("event date"))
     redeem_end_date = models.DateField(verbose_name=_("redemption end date"))
     step = models.PositiveSmallIntegerField(
